@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(lib)
 
-file(GLOB J3DMATERIALIZER_SRC
+file(GLOB_RECURSE J3DMATERIALIZER_SRC
     # J3DMaterializer
     "src/*.cpp"
     "src/*.c"
@@ -13,10 +13,9 @@ file(GLOB J3DMATERIALIZER_SRC
     "include/*.h"
     
     # ImGuiFileDialog
-    "lib/ImGuiFileDialog/*.h"
-    "lib/ImGuiFileDialog/*.cpp"
+    "lib/ImGuiFileDialog/ImGuiFileDialog/*.cpp"
 )
 
 add_executable(j3dmaterializer ${J3DMATERIALIZER_SRC})
-target_include_directories(j3dultra PUBLIC include lib/glfw/include)
+target_include_directories(j3dultra PUBLIC include include/util lib/glfw/include lib/ImGuiFileDialog/ImGuiFileDialog/)
 target_link_libraries(j3dmaterializer PUBLIC j3dultra imgui glfw)
