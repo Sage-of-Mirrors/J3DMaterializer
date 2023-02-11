@@ -53,6 +53,7 @@ bool UMaterializerApplication::Setup() {
 	// Initialize imgui
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(mWindow, true);

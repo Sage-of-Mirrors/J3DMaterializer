@@ -1,6 +1,7 @@
 #include "UMaterializerContext.hpp"
 #include "ui/UMaterializerUIPanel.hpp"
 #include "ui/UMaterializerStagePanel.hpp"
+#include "util/UUIUtil.hpp"
 
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/J3DModelData.hpp>
@@ -11,6 +12,7 @@
 #include <ImGuiFileDialog.h>
 #include <glad/glad.h>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <bstream.h>
 
 bool UMaterializerContext::Update(float deltaTime) {
@@ -32,7 +34,71 @@ void UMaterializerContext::Render(float deltaTime) {
 		mInstance->Render(deltaTime);
 }
 
+void UMaterializerContext::SetUpDocking() {
+	const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+
+	ImGuiDockNodeFlags dockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiDockNodeFlags_NoDockingInCentralNode;
+	mMainDockSpaceID = ImGui::DockSpaceOverViewport(mainViewport, dockFlags);
+	
+	if (!bIsDockingSetUp) {
+		ImGui::DockBuilderRemoveNode(mMainDockSpaceID); // clear any previous layout
+		ImGui::DockBuilderAddNode(mMainDockSpaceID, dockFlags | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(mMainDockSpaceID, mainViewport->Size);
+
+		mDockNodeTopID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Up, 0.5f, nullptr, &mMainDockSpaceID);
+		mDockNodeRightID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Right, 0.5f, nullptr, &mMainDockSpaceID);
+		mDockNodeDownID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Down, 0.5f, nullptr, &mMainDockSpaceID);
+		mDockNodeLeftID = ImGui::DockBuilderSplitNode(mMainDockSpaceID, ImGuiDir_Left, 0.5f, nullptr, &mMainDockSpaceID);
+
+		ImGui::DockBuilderDockWindow("mainWindow", mDockNodeLeftID);
+
+		ImGui::DockBuilderFinish(mMainDockSpaceID);
+
+		bIsDockingSetUp = true;
+	}
+}
+
+void UMaterializerContext::RenderTevStageTree() {
+	auto test = mMaterials[0]->TevBlock.mTevStages;
+
+	ImGui::Text("TEV Stages:");
+
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+	ImGui::BeginChild("tevStages", ImVec2(0, 260), true, 0);
+
+	for (int i = 0; i < test.size(); i++) {
+		char stageName[16];
+		std::snprintf(stageName, 16, "Stage %i", i);
+
+		if (ImGui::TreeNode(stageName)) {
+			ImGui::TreePop();
+		}
+	}
+
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
+}
+
+void UMaterializerContext::RenderMainWindow(float deltaTime) {
+	// Disable the tab bar for the main window.
+	ImGuiWindowClass mainWindowOverride;
+	mainWindowOverride.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoTabBar;
+	ImGui::SetNextWindowClass(&mainWindowOverride);
+
+	ImGui::Begin("mainWindow", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
+	
+	if (mData.get() != nullptr) {
+		RenderTevStageTree();
+	}
+
+	ImGui::End();
+}
+
 void UMaterializerContext::RenderPanels(float deltaTime) {
+	SetUpDocking();
+
+	RenderMainWindow(deltaTime);
+
 	if (mStagePanel.get() != nullptr) {
 		mStagePanel->Render(deltaTime);
 	}

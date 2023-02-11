@@ -24,8 +24,19 @@ class UMaterializerContext {
 
 	USceneCamera mCamera;
 
+	bool bIsDockingSetUp { false };
+	uint32_t mMainDockSpaceID;
+	uint32_t mDockNodeTopID;
+	uint32_t mDockNodeRightID;
+	uint32_t mDockNodeDownID;
+	uint32_t mDockNodeLeftID;
+
 	bool bIsFileDialogOpen { false };
 
+	void SetUpDocking();
+
+	void RenderTevStageTree();
+	void RenderMainWindow(float deltaTime);
 	void RenderPanels(float deltaTime);
 	void RenderMenuBar();
 
