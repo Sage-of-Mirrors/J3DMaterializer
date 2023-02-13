@@ -1,84 +1,111 @@
 #include "ui/UMaterializerStagePanel.hpp"
 
 #include "UUIUtil.hpp"
-#include <J3D/J3DMaterialData.hpp>
+#include <J3D/J3DMaterial.hpp>
 #include <imgui.h>
 
-UMaterializerStagePanel::UMaterializerStagePanel(const std::string name) : UMaterializerUIPanel(name), mCurrentStage(nullptr) {
+UMaterializerStagePanel::UMaterializerStagePanel(const std::string name, std::shared_ptr<J3DTevBlock> block, uint32_t index)
+    : UMaterializerUIPanel(name), mBlock(block), mIndex(index) {
 
 }
 
 void UMaterializerStagePanel::RenderContents(float deltaTime) {
-    if (mCurrentStage.get() == nullptr) {
+    if (mBlock.expired()) {
         ImGui::Text("Current TEV stage is invalid!");
+
+        bShouldClose = true;
         return;
     }
 
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-    ImGui::BeginChild("stageSelect", ImVec2(0, 260), true, window_flags);
+    std::shared_ptr<J3DTevBlock> block = mBlock.lock();
 
-    for (int i = 0; i < mTevStages.size(); i++) {
-        char a[16];
-        std::snprintf(a, 16, "Stage %i", i + 1);
+    UIUtil::RenderComboEnum<EGXKonstColorSel>("Konst Color Select", block->mKonstColorSelection[mIndex]);
+    UIUtil::RenderComboEnum<EGXKonstAlphaSel>("Konst Alpha Select", block->mKonstAlphaSelection[mIndex]);
 
-        if (ImGui::Selectable(a, false)) {
-            mCurrentStage = mTevStages[i];
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("TEV Order")) {
+        UIUtil::RenderComboEnum<EGXTexCoordSlot>("Tex Coord Gen", block->mTevOrders[mIndex].TexCoordId);
+        int texMap = block->mTevOrders[mIndex].TexMap;
+        if (ImGui::InputInt("Tex Map", &texMap)) {
+            if (texMap < block->mTextureIndices.size()) {
+                texMap = 0;
+            }
+
+            block->mTevOrders[mIndex].TexMap = texMap;
         }
+
+        ImGui::Spacing();
+
+        UIUtil::RenderComboEnum<EGXColorChannelId>("Color Channel", block->mTevOrders[mIndex].ChannelId);
     }
 
-    ImGui::EndChild();
-    ImGui::PopStyleVar();
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    std::shared_ptr<J3DTevStageInfo> stage = block->mTevStages[mIndex];
 
     // Color combiner UI
     if (ImGui::CollapsingHeader("Color Combiner")) {
-        ImGui::Indent();
-        ImGui::Text("Inputs");
-        ImGui::Indent();
-
         ImGui::PushID("color");
-        UIUtil::RenderComboEnum<EGXCombineColorInput>("A", mCurrentStage->ColorInput[0]);
-        UIUtil::RenderComboEnum<EGXCombineColorInput>("B", mCurrentStage->ColorInput[1]);
-        UIUtil::RenderComboEnum<EGXCombineColorInput>("C", mCurrentStage->ColorInput[2]);
-        UIUtil::RenderComboEnum<EGXCombineColorInput>("D", mCurrentStage->ColorInput[3]);
 
-        ImGui::Unindent();
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Inputs")) {
+            UIUtil::RenderComboEnum<EGXCombineColorInput>("A", stage->ColorInput[0]);
+            UIUtil::RenderComboEnum<EGXCombineColorInput>("B", stage->ColorInput[1]);
+            UIUtil::RenderComboEnum<EGXCombineColorInput>("C", stage->ColorInput[2]);
+            UIUtil::RenderComboEnum<EGXCombineColorInput>("D", stage->ColorInput[3]);
+        }
 
-        UIUtil::RenderComboEnum<EGXTevOp>("Operation", mCurrentStage->ColorOperation);
-        UIUtil::RenderComboEnum<EGXTevBias>("Bias", mCurrentStage->ColorBias);
-        UIUtil::RenderComboEnum<EGXTevScale>("Scale", mCurrentStage->ColorScale);
-        ImGui::Checkbox("Clamp", &mCurrentStage->ColorClamp);
-        UIUtil::RenderComboEnum<EGXTevRegister>("Output Register", mCurrentStage->ColorOutputRegister);
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        UIUtil::RenderComboEnum<EGXTevOp>("Operation", stage->ColorOperation);
+        UIUtil::RenderComboEnum<EGXTevBias>("Bias", stage->ColorBias);
+        UIUtil::RenderComboEnum<EGXTevScale>("Scale", stage->ColorScale);
+
+        ImGui::Spacing();
+
+        ImGui::Checkbox("Clamp", &stage->ColorClamp);
+
+        ImGui::Spacing();
+
+        UIUtil::RenderComboEnum<EGXTevRegister>("Output Register", stage->ColorOutputRegister);
+        
         ImGui::PopID();
-
-        ImGui::Unindent();
     }
 
-    ImGui::Separator();
+    ImGui::Spacing();
+    ImGui::Spacing();
 
     // Alpha combiner UI
     if (ImGui::CollapsingHeader("Alpha Combiner")) {
-        ImGui::Indent();
         ImGui::Text("Inputs");
-        ImGui::Indent();
 
         ImGui::PushID("alpha");
-        UIUtil::RenderComboEnum<EGXCombineAlphaInput>("A", mCurrentStage->AlphaInput[0]);
-        UIUtil::RenderComboEnum<EGXCombineAlphaInput>("B", mCurrentStage->AlphaInput[1]);
-        UIUtil::RenderComboEnum<EGXCombineAlphaInput>("C", mCurrentStage->AlphaInput[2]);
-        UIUtil::RenderComboEnum<EGXCombineAlphaInput>("D", mCurrentStage->AlphaInput[3]);
 
-        ImGui::Unindent();
-        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Inputs")) {
+            UIUtil::RenderComboEnum<EGXCombineAlphaInput>("A", stage->AlphaInput[0]);
+            UIUtil::RenderComboEnum<EGXCombineAlphaInput>("B", stage->AlphaInput[1]);
+            UIUtil::RenderComboEnum<EGXCombineAlphaInput>("C", stage->AlphaInput[2]);
+            UIUtil::RenderComboEnum<EGXCombineAlphaInput>("D", stage->AlphaInput[3]);
+        }
 
-        UIUtil::RenderComboEnum<EGXTevOp>("Operation", mCurrentStage->AlphaOperation);
-        UIUtil::RenderComboEnum<EGXTevBias>("Bias", mCurrentStage->AlphaBias);
-        UIUtil::RenderComboEnum<EGXTevScale>("Scale", mCurrentStage->AlphaScale);
-        ImGui::Checkbox("Clamp", &mCurrentStage->AlphaClamp);
-        UIUtil::RenderComboEnum<EGXTevRegister>("Output Register", mCurrentStage->AlphaOutputRegister);
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        UIUtil::RenderComboEnum<EGXTevOp>("Operation", stage->AlphaOperation);
+        UIUtil::RenderComboEnum<EGXTevBias>("Bias", stage->AlphaBias);
+        UIUtil::RenderComboEnum<EGXTevScale>("Scale", stage->AlphaScale);
+
+        ImGui::Spacing();
+
+        ImGui::Checkbox("Clamp", &stage->AlphaClamp);
+
+        ImGui::Spacing();
+
+        UIUtil::RenderComboEnum<EGXTevRegister>("Output Register", stage->AlphaOutputRegister);
+
         ImGui::PopID();
-
-        ImGui::Unindent();
     }
 }

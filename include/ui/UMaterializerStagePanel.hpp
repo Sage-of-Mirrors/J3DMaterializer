@@ -5,20 +5,15 @@
 #include <memory>
 #include <vector>
 
-struct J3DTevStageInfo;
+struct J3DTevBlock;
 
 class UMaterializerStagePanel : public UMaterializerUIPanel {
-    std::vector<std::shared_ptr<J3DTevStageInfo>> mTevStages;
-    std::shared_ptr<J3DTevStageInfo> mCurrentStage;
+    std::weak_ptr<J3DTevBlock> mBlock;
+    uint32_t mIndex;
 
 protected:
     virtual void RenderContents(float deltaTime) override;
 
 public:
-    UMaterializerStagePanel(const std::string name);
-
-    void SetStageList(std::vector<std::shared_ptr<J3DTevStageInfo>> stages) {
-        mTevStages = stages;
-        mCurrentStage = mTevStages[0];
-    }
+    UMaterializerStagePanel(const std::string name, std::shared_ptr<J3DTevBlock> block, uint32_t mIndex);
 };

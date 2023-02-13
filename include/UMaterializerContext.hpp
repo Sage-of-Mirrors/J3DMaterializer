@@ -6,8 +6,9 @@
 #include <filesystem>
 #include <memory>
 
-class UMaterializerStagePanel;
+class UMaterializerUIPanel;
 class J3DMaterial;
+class UMaterialLayer;
 
 namespace bStream { class CStream; }
 class J3DModelData;
@@ -18,9 +19,12 @@ class UMaterializerContext {
 	std::shared_ptr<J3DModelInstance> mInstance;
 
 	std::vector<std::shared_ptr<J3DMaterial>> mMaterials;
-	uint32_t mCurrentMaterialIndex = 0;
+	std::vector<std::shared_ptr<UMaterialLayer>> mLayers;
 
-	std::shared_ptr<UMaterializerStagePanel> mStagePanel;
+	uint32_t mCurrentMaterialIndex = 0;
+	uint32_t mCurrentLayerIndex = 0;
+
+	std::vector<std::shared_ptr<UMaterializerUIPanel>> mPanels;
 
 	USceneCamera mCamera;
 
@@ -34,6 +38,9 @@ class UMaterializerContext {
 	bool bIsFileDialogOpen { false };
 
 	void SetUpDocking();
+
+	void RenderLayerList();
+	void RenderMaterialList();
 
 	void RenderTevStageTree();
 	void RenderMainWindow(float deltaTime);
