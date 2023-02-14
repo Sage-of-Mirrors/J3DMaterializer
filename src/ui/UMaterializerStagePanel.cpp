@@ -10,14 +10,23 @@ UMaterializerStagePanel::UMaterializerStagePanel(const std::string name, std::sh
 }
 
 void UMaterializerStagePanel::RenderContents(float deltaTime) {
+    // Make sure block is valid (I assume it always will be, but best to be sure)
     if (mBlock.expired()) {
-        ImGui::Text("Current TEV stage is invalid!");
+        ImGui::Text("Current TEV block is invalid!");
 
-        bShouldClose = true;
+        bIsOpen = false;
         return;
     }
 
     std::shared_ptr<J3DTevBlock> block = mBlock.lock();
+
+    // Make sure our assigned TEV stage is valid
+    if (mIndex >= block->mTevStages.size() || block->mTevStages[mIndex].get() == nullptr) {
+        ImGui::Text("Current TEV stage is invalid!");
+
+        bIsOpen = false;
+        return;
+    }
 
     UIUtil::RenderComboEnum<EGXKonstColorSel>("Konst Color Select", block->mKonstColorSelection[mIndex]);
     UIUtil::RenderComboEnum<EGXKonstAlphaSel>("Konst Alpha Select", block->mKonstAlphaSelection[mIndex]);
@@ -26,19 +35,21 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("TEV Order")) {
-        UIUtil::RenderComboEnum<EGXTexCoordSlot>("Tex Coord Gen", block->mTevOrders[mIndex].TexCoordId);
-        int texMap = block->mTevOrders[mIndex].TexMap;
+        std::shared_ptr<J3DTevOrderInfo> tevOrder = block->mTevOrders[mIndex];
+
+        UIUtil::RenderComboEnum<EGXTexCoordSlot>("Tex Coord Gen", tevOrder->TexCoordId);
+        int texMap = tevOrder->TexMap;
         if (ImGui::InputInt("Tex Map", &texMap)) {
             if (texMap < block->mTextureIndices.size()) {
                 texMap = 0;
             }
 
-            block->mTevOrders[mIndex].TexMap = texMap;
+            tevOrder->TexMap = texMap;
         }
 
         ImGui::Spacing();
 
-        UIUtil::RenderComboEnum<EGXColorChannelId>("Color Channel", block->mTevOrders[mIndex].ChannelId);
+        UIUtil::RenderComboEnum<EGXColorChannelId>("Color Channel", tevOrder->ChannelId);
     }
 
     ImGui::Spacing();

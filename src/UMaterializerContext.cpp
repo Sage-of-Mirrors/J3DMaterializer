@@ -1,6 +1,9 @@
 #include "UMaterializerContext.hpp"
 #include "ui/UMaterializerUIPanel.hpp"
 #include "ui/UMaterializerStagePanel.hpp"
+#include "ui/UMaterializerTexGenPanel.hpp"
+#include "ui/UMaterializerTexMatrixpanel.hpp"
+
 #include "util/UUIUtil.hpp"
 #include "UMaterialLayer.hpp"
 
@@ -100,9 +103,9 @@ void UMaterializerContext::RenderMaterialList() {
 	}
 }
 
-void UMaterializerContext::RenderTevStageTree() {
+void UMaterializerContext::RenderTevStageList() {
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
-	ImGui::BeginChild("tevStages", ImVec2(0, 200), true, 0);
+	ImGui::BeginChild("tevStages", ImVec2(0, 150), true, 0);
 
 	for (int i = 0; i < mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size(); i++) {
 		char windowName[128];
@@ -129,6 +132,105 @@ void UMaterializerContext::RenderTevStageTree() {
 
 	ImGui::EndChild();
 	ImGui::PopStyleVar();
+
+	if (ImGui::Button("Add TEV Stage", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size() < 16) {
+		std::shared_ptr<J3DTevStageInfo> newTevStage = std::make_shared<J3DTevStageInfo>();
+		std::shared_ptr<J3DTevOrderInfo> newTevOrder = std::make_shared<J3DTevOrderInfo>();
+
+		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.push_back(newTevStage);
+		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.push_back(newTevOrder);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Remove TEV Stage", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size() > 1) {
+		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.erase(mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.end() - 1);
+		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.erase(mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.end() - 1);
+	}
+}
+
+void UMaterializerContext::RenderTexGenList() {
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+	ImGui::BeginChild("texGens1", ImVec2(0, 150), true, 0);
+
+	for (int i = 0; i < mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.size(); i++) {
+		char windowName[128];
+
+		char stageName[16];
+		std::snprintf(stageName, 16, "TexCoordGen %i", i);
+
+		if (ImGui::Selectable(stageName)) {
+			std::snprintf(windowName, 128, "%s - TexCoordGen %i", mMaterials[mCurrentMaterialIndex]->Name.data(), i);
+
+			bool bAlreadyOpen = false;
+			for (std::shared_ptr<UMaterializerUIPanel> panel : mPanels) {
+				if (std::strcmp(panel->GetName().data(), windowName) == 0) {
+					bAlreadyOpen = true;
+					break;
+				}
+			}
+
+			if (!bAlreadyOpen) {
+				mPanels.push_back(std::make_shared<UMaterializerTexGenPanel>(windowName, mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo[i]));
+			}
+		}
+	}
+
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
+
+	if (ImGui::Button("Add Tex Gen", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.size() < 8) {
+		std::shared_ptr<J3DTexCoordInfo> newTexGen = std::make_shared<J3DTexCoordInfo>();
+		mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.push_back(newTexGen);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Remove Tex Gen", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.size() > 0) {
+		mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.erase(mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.end() - 1);
+	}
+}
+
+void UMaterializerContext::RenderTexMatrixList() {
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+	ImGui::BeginChild("texMtxs", ImVec2(0, 150), true, 0);
+
+	for (int i = 0; i < mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.size(); i++) {
+		char windowName[128];
+
+		char stageName[16];
+		std::snprintf(stageName, 16, "TexMatrix %i", i);
+
+		if (ImGui::Selectable(stageName)) {
+			std::snprintf(windowName, 128, "%s - TexMatrix %i", mMaterials[mCurrentMaterialIndex]->Name.data(), i);
+
+			bool bAlreadyOpen = false;
+			for (std::shared_ptr<UMaterializerUIPanel> panel : mPanels) {
+				if (std::strcmp(panel->GetName().data(), windowName) == 0) {
+					bAlreadyOpen = true;
+					break;
+				}
+			}
+
+			if (!bAlreadyOpen) {
+				mPanels.push_back(std::make_shared<UMaterializerTexMatrixPanel>(windowName, mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix[i]));
+			}
+		}
+	}
+
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
+
+	if (ImGui::Button("Add Tex Matrix", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.size() < 8) {
+		std::shared_ptr<J3DTexMatrixInfo> newTexMtx = std::make_shared<J3DTexMatrixInfo>();
+		mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.push_back(newTexMtx);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Remove Tex Matrix", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.size() > 0) {
+		mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.erase(mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.end() - 1);
+	}
 }
 
 void UMaterializerContext::RenderMainWindow(float deltaTime) {
@@ -153,12 +255,22 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 			ImGui::Spacing();
 
 			if (ImGui::CollapsingHeader("TEV Stages")) {
-				RenderTevStageTree();
+				RenderTevStageList();
 			}
 
 			ImGui::Spacing();
 
-			if (ImGui::CollapsingHeader("TEV Colors")) {
+			if (ImGui::CollapsingHeader("Tex Coord Generators")) {
+				RenderTexGenList();
+			}
+
+			ImGui::Spacing();
+
+			if (ImGui::CollapsingHeader("Tex Matrices")) {
+				RenderTexMatrixList();
+			}
+
+			/*if (ImGui::CollapsingHeader("TEV Colors")) {
 				ImGui::PushID("tevColor");
 
 				ImGui::ColorEdit4("Color 0", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[0].r, ImGuiColorEditFlags_Float);
@@ -167,38 +279,20 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 				ImGui::ColorEdit4("Color 3", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[3].r, ImGuiColorEditFlags_Float);
 
 				ImGui::PopID();
-			}
+			}*/
 
-			ImGui::Spacing();
 			ImGui::Spacing();
 
 			if (ImGui::CollapsingHeader("Konst Colors")) {
 				ImGui::PushID("konstColor");
 
-				float c[4]{
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].r,
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].g,
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].b,
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].a
-				};
-
-				if (ImGui::ColorEdit4("Color 1", c, ImGuiColorEditFlags_Float)) {
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].r = c[0];
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].g = c[1];
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].b = c[2];
-					mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].a = c[3];
-				}
-
 				ImGui::ColorEdit4("Color 0", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[0].r, ImGuiColorEditFlags_Float);
-				//ImGui::ColorEdit4("Color 1", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].r, ImGuiColorEditFlags_Float);
+				ImGui::ColorEdit4("Color 1", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].r, ImGuiColorEditFlags_Float);
 				ImGui::ColorEdit4("Color 2", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[2].r, ImGuiColorEditFlags_Float);
 				ImGui::ColorEdit4("Color 3", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[3].r, ImGuiColorEditFlags_Float);
 
 				ImGui::PopID();
 			}
-
-			ImGui::Spacing();
-			ImGui::Spacing();
 
 			ImGui::Spacing();
 
@@ -323,7 +417,7 @@ void UMaterializerContext::RenderPanels(float deltaTime) {
 	RenderMainWindow(deltaTime);
 
 	for (int i = 0; i < mPanels.size(); i++) {
-		if (mPanels[i]->GetClosingStatus()) {
+		if (!mPanels[i]->IsOpen()) {
 			mPanels.erase(mPanels.begin() + i);
 			i--;
 

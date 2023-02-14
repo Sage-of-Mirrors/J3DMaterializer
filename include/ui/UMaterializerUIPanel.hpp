@@ -5,7 +5,7 @@
 class UMaterializerUIPanel {
 protected:
     std::string mName;
-    bool bShouldClose{ false };
+    bool bIsOpen{ false };
 
     virtual void RenderContents(float deltaTime) = 0;
 
@@ -15,5 +15,5 @@ public:
     virtual void Render(float deltaTime);
 
     std::string GetName() const { return mName; }
-    bool GetClosingStatus() const { return bShouldClose; }
+    bool IsOpen() const { return bIsOpen; }
 };
