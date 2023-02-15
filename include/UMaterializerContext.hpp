@@ -45,6 +45,7 @@ class UMaterializerContext {
 	void RenderTevStageList();
 	void RenderTexGenList();
 	void RenderTexMatrixList();
+	void RenderColorChannelList();
 	void RenderMainWindow(float deltaTime);
 	void RenderPanels(float deltaTime);
 	void RenderMenuBar();

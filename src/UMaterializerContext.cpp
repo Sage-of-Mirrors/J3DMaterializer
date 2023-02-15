@@ -3,6 +3,7 @@
 #include "ui/UMaterializerStagePanel.hpp"
 #include "ui/UMaterializerTexGenPanel.hpp"
 #include "ui/UMaterializerTexMatrixpanel.hpp"
+#include "ui/UMaterializerColorChannelPanel.hpp"
 
 #include "util/UUIUtil.hpp"
 #include "UMaterialLayer.hpp"
@@ -64,6 +65,8 @@ void UMaterializerContext::SetUpDocking() {
 
 void UMaterializerContext::RenderLayerList() {
 	if (ImGui::CollapsingHeader("Layers", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Indent();
+
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 		ImGui::BeginChild("layerList", ImVec2(0, 200), true, 0);
 
@@ -84,11 +87,15 @@ void UMaterializerContext::RenderLayerList() {
 
 		ImGui::EndChild();
 		ImGui::PopStyleVar();
+
+		ImGui::Unindent();
 	}
 }
 
 void UMaterializerContext::RenderMaterialList() {
 	if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Indent();
+
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 		ImGui::BeginChild("materialList", ImVec2(0, 200), true, 0);
 
@@ -100,10 +107,14 @@ void UMaterializerContext::RenderMaterialList() {
 
 		ImGui::EndChild();
 		ImGui::PopStyleVar();
+
+		ImGui::Unindent();
 	}
 }
 
 void UMaterializerContext::RenderTevStageList() {
+	ImGui::Indent();
+
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 	ImGui::BeginChild("tevStages", ImVec2(0, 150), true, 0);
 
@@ -147,9 +158,13 @@ void UMaterializerContext::RenderTevStageList() {
 		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.erase(mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.end() - 1);
 		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.erase(mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.end() - 1);
 	}
+
+	ImGui::Unindent();
 }
 
 void UMaterializerContext::RenderTexGenList() {
+	ImGui::Indent();
+
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 	ImGui::BeginChild("texGens1", ImVec2(0, 150), true, 0);
 
@@ -189,9 +204,13 @@ void UMaterializerContext::RenderTexGenList() {
 	if (ImGui::Button("Remove Tex Gen", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.size() > 0) {
 		mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.erase(mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexCoordInfo.end() - 1);
 	}
+
+	ImGui::Unindent();
 }
 
 void UMaterializerContext::RenderTexMatrixList() {
+	ImGui::Indent();
+
 	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 	ImGui::BeginChild("texMtxs", ImVec2(0, 150), true, 0);
 
@@ -231,6 +250,50 @@ void UMaterializerContext::RenderTexMatrixList() {
 	if (ImGui::Button("Remove Tex Matrix", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.size() > 0) {
 		mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.erase(mMaterials[mCurrentMaterialIndex]->TexGenBlock.mTexMatrix.end() - 1);
 	}
+
+	ImGui::Unindent();
+}
+
+void UMaterializerContext::RenderColorChannelList() {
+	ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+	ImGui::BeginChild("colorChans", ImVec2(0, 46), true, 0);
+
+	for (int i = 0; i < mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels.size(); i++) {
+		char windowName[128];
+
+		char stageName[16];
+		std::snprintf(stageName, 16, "Color Channel %i", i);
+
+		if (ImGui::Selectable(stageName)) {
+			std::snprintf(windowName, 128, "%s - Color Channel %i", mMaterials[mCurrentMaterialIndex]->Name.data(), i);
+
+			bool bAlreadyOpen = false;
+			for (std::shared_ptr<UMaterializerUIPanel> panel : mPanels) {
+				if (std::strcmp(panel->GetName().data(), windowName) == 0) {
+					bAlreadyOpen = true;
+					break;
+				}
+			}
+
+			if (!bAlreadyOpen) {
+				mPanels.push_back(std::make_shared<UMaterializerColorChannelPanel>(windowName, mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels[i]));
+			}
+		}
+	}
+
+	ImGui::EndChild();
+	ImGui::PopStyleVar();
+
+	if (ImGui::Button("Add Color Channel", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels.size() < 2) {
+		std::shared_ptr<J3DColorChannel> newChannel = std::make_shared<J3DColorChannel>();
+		mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels.push_back(newChannel);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Remove Color Channel", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels.size() > 0) {
+		mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels.erase(mMaterials[mCurrentMaterialIndex]->LightBlock.mColorChannels.end() - 1);
+	}
 }
 
 void UMaterializerContext::RenderMainWindow(float deltaTime) {
@@ -250,54 +313,126 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 		ImGui::Spacing();
 
 		if (ImGui::CollapsingHeader("Current Material")) {
+			ImGui::Indent();
+
 			ImGui::Text("Name: %s", mMaterials[mCurrentMaterialIndex]->Name.data());
 
 			ImGui::Spacing();
 
-			if (ImGui::CollapsingHeader("TEV Stages")) {
-				RenderTevStageList();
+			ImGui::PushID("TevBlock");
+			if(ImGui::CollapsingHeader("TEV Block")) {
+				ImGui::Indent();
+				if (ImGui::CollapsingHeader("TEV Stages")) {
+					RenderTevStageList();
+				}
+				ImGui::Unindent();
+
+				ImGui::Spacing();
+
+				/*
+				ImGui::Indent();
+				if (ImGui::CollapsingHeader("TEV Colors")) {
+					ImGui::PushID("tevColor");
+
+					ImGui::Indent();
+					ImGui::ColorEdit4("Color 0", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[0].r, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Color 1", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[1].r, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Color 2", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[2].r, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Color 3", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[3].r, ImGuiColorEditFlags_Float);
+					ImGui::Unindent();
+
+					ImGui::PopID();
+				}
+				ImGui::Unindent();
+				
+				ImGui::Spacing();
+				*/
+
+				ImGui::Indent();
+				if (ImGui::CollapsingHeader("Konst Colors")) {
+					ImGui::PushID("konstColor");
+
+					ImGui::Indent();
+					ImGui::ColorEdit4("Color 0", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[0].r, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Color 1", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].r, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Color 2", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[2].r, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Color 3", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[3].r, ImGuiColorEditFlags_Float);
+					ImGui::Unindent();
+
+					ImGui::PopID();
+				}
+				ImGui::Unindent();
 			}
+			ImGui::PopID();
 
 			ImGui::Spacing();
 
-			if (ImGui::CollapsingHeader("Tex Coord Generators")) {
-				RenderTexGenList();
+			ImGui::PushID("TexGenBlock");
+			if (ImGui::CollapsingHeader("TexGen Block")) {
+				ImGui::Indent();
+				if (ImGui::CollapsingHeader("Tex Coord Generators")) {
+					RenderTexGenList();
+				}
+				ImGui::Unindent();
+
+				ImGui::Spacing();
+
+				ImGui::Indent();
+				if (ImGui::CollapsingHeader("Tex Matrices")) {
+					RenderTexMatrixList();
+				}
+				ImGui::Unindent();
 			}
+			ImGui::PopID();
 
 			ImGui::Spacing();
 
-			if (ImGui::CollapsingHeader("Tex Matrices")) {
-				RenderTexMatrixList();
+			ImGui::PushID("LightBlock");
+			if (ImGui::CollapsingHeader("Light Block")) {
+				ImGui::Spacing();
+				ImGui::Indent();
+
+				if (ImGui::CollapsingHeader("Color Channels")) {
+					ImGui::Indent();
+
+					RenderColorChannelList();
+
+					ImGui::Unindent();
+				}
+
+				ImGui::Spacing();
+
+				if (ImGui::CollapsingHeader("Material Colors")) {
+					ImGui::Indent();
+
+					ImGui::ColorEdit4("Material Color 0", &mMaterials[mCurrentMaterialIndex]->LightBlock.mMatteColor[0].x, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Material Color 1", &mMaterials[mCurrentMaterialIndex]->LightBlock.mMatteColor[1].x, ImGuiColorEditFlags_Float);
+
+					ImGui::Unindent();
+				}
+
+				ImGui::Spacing();
+
+				if (ImGui::CollapsingHeader("Ambient Colors")) {
+					ImGui::Indent();
+
+					ImGui::ColorEdit4("Ambient Color 0", &mMaterials[mCurrentMaterialIndex]->LightBlock.mAmbientColor[0].x, ImGuiColorEditFlags_Float);
+					ImGui::ColorEdit4("Ambient Color 1", &mMaterials[mCurrentMaterialIndex]->LightBlock.mAmbientColor[1].x, ImGuiColorEditFlags_Float);
+
+					ImGui::Unindent();
+				}
+
+				ImGui::Unindent();
 			}
-
-			/*if (ImGui::CollapsingHeader("TEV Colors")) {
-				ImGui::PushID("tevColor");
-
-				ImGui::ColorEdit4("Color 0", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[0].r, ImGuiColorEditFlags_Float);
-				ImGui::ColorEdit4("Color 1", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[1].r, ImGuiColorEditFlags_Float);
-				ImGui::ColorEdit4("Color 2", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[2].r, ImGuiColorEditFlags_Float);
-				ImGui::ColorEdit4("Color 3", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevColors[3].r, ImGuiColorEditFlags_Float);
-
-				ImGui::PopID();
-			}*/
+			ImGui::PopID();
 
 			ImGui::Spacing();
 
-			if (ImGui::CollapsingHeader("Konst Colors")) {
-				ImGui::PushID("konstColor");
-
-				ImGui::ColorEdit4("Color 0", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[0].r, ImGuiColorEditFlags_Float);
-				ImGui::ColorEdit4("Color 1", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[1].r, ImGuiColorEditFlags_Float);
-				ImGui::ColorEdit4("Color 2", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[2].r, ImGuiColorEditFlags_Float);
-				ImGui::ColorEdit4("Color 3", &mMaterials[mCurrentMaterialIndex]->TevBlock->mTevKonstColors[3].r, ImGuiColorEditFlags_Float);
-
-				ImGui::PopID();
-			}
-
-			ImGui::Spacing();
-
+			ImGui::PushID("PixelEngine");
 			if (ImGui::CollapsingHeader("Pixel Engine")) {
 				J3DPixelEngineBlock* pixelEngine = &mMaterials[mCurrentMaterialIndex]->PEBlock;
+
+				ImGui::Indent();
 
 				ImGui::Checkbox("Dithering Enabled", &pixelEngine->mDither);
 				ImGui::Checkbox("ZCompLoc", &pixelEngine->mZCompLoc);
@@ -307,6 +442,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 				if (ImGui::CollapsingHeader("Alpha Compare")) {
 					ImGui::PushID("alphaCompare");
+					
+					ImGui::Indent();
 
 					UIUtil::RenderComboEnum<EGXCompareType>("Compare Function A", pixelEngine->mAlphaCompare.CompareFunc0);
 					int refA = pixelEngine->mAlphaCompare.Reference0;
@@ -326,6 +463,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 					ImGui::Spacing();
 
+					ImGui::Unindent();
+
 					ImGui::PopID();
 				}
 
@@ -333,6 +472,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 				if (ImGui::CollapsingHeader("Blend Mode")) {
 					ImGui::PushID("blendMode");
+
+					ImGui::Indent();
 
 					UIUtil::RenderComboEnum<EGXBlendMode>("Type", pixelEngine->mBlendMode.Type);
 
@@ -347,6 +488,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 					ImGui::Spacing();
 
+					ImGui::Unindent();
+
 					ImGui::PopID();
 				}
 
@@ -354,6 +497,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 				if (ImGui::CollapsingHeader("Fog")) {
 					ImGui::PushID("fog");
+
+					ImGui::Indent();
 
 					ImGui::Checkbox("Enabled", &pixelEngine->mFog.Enable);
 
@@ -383,6 +528,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 					ImGui::Spacing();
 
+					ImGui::Unindent();
+
 					ImGui::PopID();
 				}
 
@@ -390,6 +537,8 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 				if (ImGui::CollapsingHeader("Z-Mode")) {
 					ImGui::PushID("zMode");
+
+					ImGui::Indent();
 
 					ImGui::Checkbox("Enabled", &pixelEngine->mZMode.Enable);
 
@@ -402,9 +551,16 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 
 					ImGui::Spacing();
 
+					ImGui::Unindent();
+
 					ImGui::PopID();
 				}
+
+				ImGui::Unindent();
 			}
+			ImGui::PopID();
+
+			ImGui::Unindent();
 		}
 	}
 
