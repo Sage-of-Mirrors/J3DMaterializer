@@ -7,6 +7,7 @@
 
 #include "util/UUIUtil.hpp"
 #include "UMaterialLayer.hpp"
+#include "UMaterializerIOManager.hpp"
 
 #include <J3D/J3DModelLoader.hpp>
 #include <J3D/J3DModelData.hpp>
@@ -144,12 +145,18 @@ void UMaterializerContext::RenderTevStageList() {
 	ImGui::EndChild();
 	ImGui::PopStyleVar();
 
+	bool bRenderMaxStages = mMaterials[mCurrentMaterialIndex]->TEVStageGenMax == mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size();
+
 	if (ImGui::Button("Add TEV Stage", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size() < 16) {
 		std::shared_ptr<J3DTevStageInfo> newTevStage = std::make_shared<J3DTevStageInfo>();
 		std::shared_ptr<J3DTevOrderInfo> newTevOrder = std::make_shared<J3DTevOrderInfo>();
 
 		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.push_back(newTevStage);
 		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.push_back(newTevOrder);
+
+		if (bRenderMaxStages) {
+			mMaterials[mCurrentMaterialIndex]->TEVStageGenMax = mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size();
+		}
 	}
 
 	ImGui::SameLine();
@@ -157,6 +164,10 @@ void UMaterializerContext::RenderTevStageList() {
 	if (ImGui::Button("Remove TEV Stage", ImVec2(200, 0)) && mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size() > 1) {
 		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.erase(mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.end() - 1);
 		mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.erase(mMaterials[mCurrentMaterialIndex]->TevBlock->mTevOrders.end() - 1);
+
+		if (bRenderMaxStages) {
+			mMaterials[mCurrentMaterialIndex]->TEVStageGenMax = mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size();
+		}
 	}
 
 	ImGui::Unindent();
@@ -316,6 +327,17 @@ void UMaterializerContext::RenderMainWindow(float deltaTime) {
 			ImGui::Indent();
 
 			ImGui::Text("Name: %s", mMaterials[mCurrentMaterialIndex]->Name.data());
+
+			ImGui::Spacing();
+
+			if (ImGui::InputInt("No. of Rendered Stages", &mMaterials[mCurrentMaterialIndex]->TEVStageGenMax)) {
+				if (mMaterials[mCurrentMaterialIndex]->TEVStageGenMax == 0) {
+					mMaterials[mCurrentMaterialIndex]->TEVStageGenMax = 1;
+				}
+				else if (mMaterials[mCurrentMaterialIndex]->TEVStageGenMax >= mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size()) {
+					mMaterials[mCurrentMaterialIndex]->TEVStageGenMax = mMaterials[mCurrentMaterialIndex]->TevBlock->mTevStages.size();
+				}
+			}
 
 			ImGui::Spacing();
 
@@ -591,6 +613,9 @@ void UMaterializerContext::RenderMenuBar() {
 		if (ImGui::MenuItem("Open...")) {
 			OpenModelCB();
 		}
+		if (ImGui::MenuItem("Save...")) {
+			SaveModelCB();
+		}
 
 		ImGui::Separator();
 		ImGui::MenuItem("Close");
@@ -606,8 +631,12 @@ void UMaterializerContext::RenderMenuBar() {
 
 	ImGui::EndMainMenuBar();
 
-	if (bIsFileDialogOpen)
+	if (bIsFileDialogOpen) {
 		ImGuiFileDialog::Instance()->OpenDialog("OpenFileDialog", "Choose File", "J3D Models (*.bmd *.bdl){.bmd,.bdl}", ".");
+	}
+	if (bIsSaveDialogOpen) {
+		ImGuiFileDialog::Instance()->OpenDialog("SaveFileDialog", "Choose File", "J3D Models (*.bmd *.bdl){.bmd,.bdl}", ".", 1, nullptr, ImGuiFileDialogFlags_ConfirmOverwrite);
+	}
 
 	if (ImGuiFileDialog::Instance()->Display("OpenFileDialog")) {
 		if (ImGuiFileDialog::Instance()->IsOk()) {
@@ -625,10 +654,31 @@ void UMaterializerContext::RenderMenuBar() {
 
 		ImGuiFileDialog::Instance()->Close();
 	}
+
+	if (ImGuiFileDialog::Instance()->Display("SaveFileDialog")) {
+		if (ImGuiFileDialog::Instance()->IsOk()) {
+			std::string FilePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+			try {
+				SaveModel(FilePath);
+			}
+			catch (std::exception e) {
+				std::cout << "Failed to save model to " << FilePath << "!\n";
+			}
+
+			bIsSaveDialogOpen = false;
+		}
+
+		ImGuiFileDialog::Instance()->Close();
+	}
 }
 
 void UMaterializerContext::OpenModelCB() {
 	bIsFileDialogOpen = true;
+}
+
+void UMaterializerContext::SaveModelCB() {
+	bIsSaveDialogOpen = true;
 }
 
 void UMaterializerContext::LoadModel(bStream::CStream* stream) {
@@ -669,6 +719,19 @@ void UMaterializerContext::LoadModelFromPath(std::filesystem::path filePath) {
 	);
 	
 	LoadModel(stream);
+	mIOManager = std::make_shared<UMaterializerIOManager>(stream);
+
+	delete stream;
+}
+
+void UMaterializerContext::SaveModel(std::filesystem::path filePath) {
+	bStream::CFileStream* stream = new bStream::CFileStream(
+		filePath.generic_u8string().c_str(),
+		bStream::Endianess::Big,
+		bStream::OpenMode::Out
+	);
+
+	mIOManager->WriteData(stream, mMaterials);
 
 	delete stream;
 }

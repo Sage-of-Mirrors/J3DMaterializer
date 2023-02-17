@@ -32,27 +32,46 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
     UIUtil::RenderComboEnum<EGXKonstAlphaSel>("Konst Alpha Select", block->mKonstAlphaSelection[mIndex]);
 
     ImGui::Spacing();
-    ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("TEV Order")) {
-        std::shared_ptr<J3DTevOrderInfo> tevOrder = block->mTevOrders[mIndex];
+    std::shared_ptr<J3DTevOrderInfo> tevOrder = block->mTevOrders[mIndex];
 
-        UIUtil::RenderComboEnum<EGXTexCoordSlot>("Tex Coord Gen", tevOrder->TexCoordId);
-        int texMap = tevOrder->TexMap;
-        if (ImGui::InputInt("Tex Map", &texMap)) {
-            if (texMap < block->mTextureIndices.size()) {
-                texMap = 0;
-            }
-
-            tevOrder->TexMap = texMap;
+    UIUtil::RenderComboEnum<EGXTexCoordSlot>("Tex Coord Gen", tevOrder->TexCoordId);
+    int texMap = tevOrder->TexMap;
+    if (ImGui::InputInt("Tex Map", &texMap)) {
+        if (texMap < 0) {
+            texMap = 0;
+        }
+        else if (texMap >= block->mTextureIndices.size()) {
+            texMap = block->mTextureIndices.size() - 1;
         }
 
-        ImGui::Spacing();
-
-        UIUtil::RenderComboEnum<EGXColorChannelId>("Color Channel", tevOrder->ChannelId);
+        tevOrder->TexMap = texMap;
     }
 
     ImGui::Spacing();
+
+    UIUtil::RenderComboEnum<EGXColorChannelId>("Color Channel", tevOrder->ChannelId);
+
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Color Swizzling")) {
+        ImGui::Indent();
+
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle R", tevOrder->mTexSwapTable[0]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle G", tevOrder->mTexSwapTable[1]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle B", tevOrder->mTexSwapTable[2]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle A", tevOrder->mTexSwapTable[3]);
+
+        ImGui::Spacing();
+
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle R", tevOrder->mRasSwapTable[0]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle G", tevOrder->mRasSwapTable[1]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle B", tevOrder->mRasSwapTable[2]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle A", tevOrder->mRasSwapTable[3]);
+
+        ImGui::Unindent();
+    }
+
     ImGui::Spacing();
 
     std::shared_ptr<J3DTevStageInfo> stage = block->mTevStages[mIndex];
@@ -61,14 +80,19 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
     if (ImGui::CollapsingHeader("Color Combiner")) {
         ImGui::PushID("color");
 
+        ImGui::Indent();
+
         if (ImGui::CollapsingHeader("Inputs")) {
+            ImGui::Indent();
+
             UIUtil::RenderComboEnum<EGXCombineColorInput>("A", stage->ColorInput[0]);
             UIUtil::RenderComboEnum<EGXCombineColorInput>("B", stage->ColorInput[1]);
             UIUtil::RenderComboEnum<EGXCombineColorInput>("C", stage->ColorInput[2]);
             UIUtil::RenderComboEnum<EGXCombineColorInput>("D", stage->ColorInput[3]);
+
+            ImGui::Unindent();
         }
 
-        ImGui::Spacing();
         ImGui::Spacing();
 
         UIUtil::RenderComboEnum<EGXTevOp>("Operation", stage->ColorOperation);
@@ -83,26 +107,30 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
 
         UIUtil::RenderComboEnum<EGXTevRegister>("Output Register", stage->ColorOutputRegister);
         
+        ImGui::Unindent();
+
         ImGui::PopID();
     }
 
     ImGui::Spacing();
-    ImGui::Spacing();
 
     // Alpha combiner UI
     if (ImGui::CollapsingHeader("Alpha Combiner")) {
-        ImGui::Text("Inputs");
-
         ImGui::PushID("alpha");
 
+        ImGui::Indent();
+
         if (ImGui::CollapsingHeader("Inputs")) {
+            ImGui::Indent();
+
             UIUtil::RenderComboEnum<EGXCombineAlphaInput>("A", stage->AlphaInput[0]);
             UIUtil::RenderComboEnum<EGXCombineAlphaInput>("B", stage->AlphaInput[1]);
             UIUtil::RenderComboEnum<EGXCombineAlphaInput>("C", stage->AlphaInput[2]);
             UIUtil::RenderComboEnum<EGXCombineAlphaInput>("D", stage->AlphaInput[3]);
+
+            ImGui::Unindent();
         }
 
-        ImGui::Spacing();
         ImGui::Spacing();
 
         UIUtil::RenderComboEnum<EGXTevOp>("Operation", stage->AlphaOperation);
@@ -116,6 +144,8 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
         ImGui::Spacing();
 
         UIUtil::RenderComboEnum<EGXTevRegister>("Output Register", stage->AlphaOutputRegister);
+
+        ImGui::Unindent();
 
         ImGui::PopID();
     }

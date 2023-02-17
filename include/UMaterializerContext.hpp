@@ -7,11 +7,12 @@
 #include <memory>
 
 class UMaterializerUIPanel;
-class J3DMaterial;
 class UMaterialLayer;
+class UMaterializerIOManager;
 
 namespace bStream { class CStream; }
 class J3DModelData;
+class J3DMaterial;
 class J3DModelInstance;
 
 class UMaterializerContext {
@@ -36,6 +37,9 @@ class UMaterializerContext {
 	uint32_t mDockNodeLeftID;
 
 	bool bIsFileDialogOpen { false };
+	bool bIsSaveDialogOpen { false };
+
+	std::shared_ptr<UMaterializerIOManager> mIOManager;
 
 	void SetUpDocking();
 
@@ -51,8 +55,13 @@ class UMaterializerContext {
 	void RenderMenuBar();
 
 	void OpenModelCB();
+	void SaveModelCB();
+
 	void LoadModel(bStream::CStream* stream);
 	void LoadModelFromPath(std::filesystem::path filePath);
+
+	void SaveModel(std::filesystem::path filePath);
+
 public:
 	UMaterializerContext() {}
 	~UMaterializerContext() {}

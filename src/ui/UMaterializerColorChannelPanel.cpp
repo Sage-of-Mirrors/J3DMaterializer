@@ -42,7 +42,14 @@ void UMaterializerColorChannelPanel::RenderContents(float deltaTime) {
                 snprintf(boxName, 8, "Light %i", i);
 
                 bool lightEnabled = channel->LightMask & (1 << i);
-                ImGui::Checkbox(boxName, &lightEnabled);
+                if (ImGui::Checkbox(boxName, &lightEnabled)) {
+                    if (lightEnabled) {
+                        channel->LightMask |= (1 << i);
+                    }
+                    else {
+                        channel->LightMask &= ~(1 << i);
+                    }
+                }
             }
         }
 
