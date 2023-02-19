@@ -29,7 +29,8 @@ class UMaterializerMAT3 {
     UComponentSet<struct J3DTevOrderInfo> mTevOrderSet;
     UComponentSet<glm::vec4> mTevColorSet;
     UComponentSet<struct J3DTevStageInfo> mTevStageSet;
-
+    UComponentSet<struct J3DSwapModeInfo> mSwapModeSet;
+    UComponentSet<struct J3DSwapModeTableInfo> mSwapModeTableSet;
     UComponentSet<struct J3DFog> mFogSet;
     UComponentSet<struct J3DAlphaCompare> mAlphaCompareSet;
     UComponentSet<struct J3DBlendMode> mBlendModeSet;

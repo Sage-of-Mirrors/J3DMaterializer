@@ -105,14 +105,47 @@ void UMaterializerMAT3::WriteMaterial(bStream::CFileStream* outputStream, std::s
         outputStream->writeUInt16(index);
     }
 
+    // TEV swap mode table indices; we need to store these before writing to the stream
+    std::vector<uint16_t> swapModeIndices;
+    std::vector<uint16_t> swapModeTableIndices;
+    for (int i = 0; i < material->TevBlock->mTevOrders.size(); i++) {
+        uint16_t rasIndex = mSwapModeTableSet.Add(material->TevBlock->mTevOrders[i]->mRasSwapMode);
+        uint16_t texIndex = mSwapModeTableSet.Add(material->TevBlock->mTevOrders[i]->mTexSwapMode);
+
+        if (std::find(swapModeTableIndices.begin(), swapModeTableIndices.end(), rasIndex) == swapModeTableIndices.end()) {
+            swapModeTableIndices.push_back(rasIndex);
+        }
+
+        if (std::find(swapModeTableIndices.begin(), swapModeTableIndices.end(), texIndex) == swapModeTableIndices.end()) {
+            swapModeTableIndices.push_back(texIndex);
+        }
+
+        swapModeIndices.push_back(mSwapModeSet.Add(J3DSwapModeInfo(rasIndex, texIndex)));
+    }
+
+    // Fill in unused slots for swap mode indices
+    for (int i = swapModeIndices.size(); i < 16; i++) {
+        swapModeIndices.push_back(UINT16_MAX);
+    }
+
+    // Fill in unused slots for swap mode table indices
+    for (int i = swapModeTableIndices.size(); i < 16; i++) {
+        if (i <= 3) {
+            swapModeTableIndices.push_back(0);
+        }
+        else {
+            swapModeTableIndices.push_back(UINT16_MAX);
+        }
+    }
+
     // TEV swap mode indices
-    for (int i = 0; i < 16; i++) {
-        outputStream->writeUInt16(UINT16_MAX);
+    for (uint16_t index : swapModeIndices) {
+        outputStream->writeUInt16(index);
     }
 
     // TEV swap mode table indices
-    for (int i = 0; i < 16; i++) {
-        outputStream->writeUInt16(UINT16_MAX);
+    for (uint16_t index : swapModeTableIndices) {
+        outputStream->writeUInt16(index);
     }
 
     // Fog index

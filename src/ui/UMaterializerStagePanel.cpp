@@ -57,17 +57,17 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
     if (ImGui::CollapsingHeader("Color Swizzling")) {
         ImGui::Indent();
 
-        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle R", tevOrder->mTexSwapTable[0]);
-        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle G", tevOrder->mTexSwapTable[1]);
-        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle B", tevOrder->mTexSwapTable[2]);
-        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle A", tevOrder->mTexSwapTable[3]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle R", tevOrder->mTexSwapMode.R);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle G", tevOrder->mTexSwapMode.G);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle B", tevOrder->mTexSwapMode.B);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Tex Swizzle A", tevOrder->mTexSwapMode.A);
 
         ImGui::Spacing();
 
-        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle R", tevOrder->mRasSwapTable[0]);
-        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle G", tevOrder->mRasSwapTable[1]);
-        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle B", tevOrder->mRasSwapTable[2]);
-        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle A", tevOrder->mRasSwapTable[3]);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle R", tevOrder->mRasSwapMode.R);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle G", tevOrder->mRasSwapMode.G);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle B", tevOrder->mRasSwapMode.B);
+        UIUtil::RenderComboEnum<EGXSwapMode>("Ras Swizzle A", tevOrder->mRasSwapMode.A);
 
         ImGui::Unindent();
     }
