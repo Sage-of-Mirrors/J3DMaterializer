@@ -36,17 +36,7 @@ void UMaterializerStagePanel::RenderContents(float deltaTime) {
     std::shared_ptr<J3DTevOrderInfo> tevOrder = block->mTevOrders[mIndex];
 
     UIUtil::RenderComboEnum<EGXTexCoordSlot>("Tex Coord Gen", tevOrder->TexCoordId);
-    int texMap = tevOrder->TexMap;
-    if (ImGui::InputInt("Tex Map", &texMap)) {
-        if (texMap < 0) {
-            texMap = 0;
-        }
-        else if (texMap >= block->mTextureIndices.size()) {
-            texMap = block->mTextureIndices.size() - 1;
-        }
-
-        tevOrder->TexMap = texMap;
-    }
+    UIUtil::RenderComboEnum<EGXTexMapSlot>("Tex Map", tevOrder->TexMapId);
 
     ImGui::Spacing();
 

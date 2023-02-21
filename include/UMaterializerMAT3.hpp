@@ -12,7 +12,6 @@ namespace bStream { class CFileStream; }
 class J3DMaterial;
 
 class UMaterializerMAT3 {
-    /* == Pixel Engine Block == */
     UComponentSet<EGXCullMode> mCullModeSet;
     UComponentSet<uint8_t> mColorChannelCountSet;
     UComponentSet<uint8_t> mTexGenCountSet;
@@ -34,12 +33,13 @@ class UMaterializerMAT3 {
     UComponentSet<struct J3DFog> mFogSet;
     UComponentSet<struct J3DAlphaCompare> mAlphaCompareSet;
     UComponentSet<struct J3DBlendMode> mBlendModeSet;
+    UComponentSet<bool> mZCompLocSet;
+    UComponentSet<bool> mDitherSet;
     UComponentSet<struct J3DNBTScaleInfo> mNBTScaleSet;
 
-    void CollatePixelEngineBlock(std::shared_ptr<J3DMaterial> material);
-    void CollateMaterialData(std::shared_ptr<J3DMaterial> material);
-
+    void WriteOffset(bStream::CFileStream* outputStream, size_t sectionStart, size_t offset);
     void WriteMaterial(bStream::CFileStream* outputStream, std::shared_ptr<J3DMaterial> material);
+    void WriteIndirectData(bStream::CFileStream* outputStream, std::shared_ptr<J3DMaterial> material);
 
 public:
     UMaterializerMAT3();
