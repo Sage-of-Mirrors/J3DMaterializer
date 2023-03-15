@@ -11,11 +11,13 @@ file(GLOB_RECURSE J3DMATERIALIZER_SRC
     "src/*.c"
     "include/*.hpp"
     "include/*.h"
+    "res/*.hpp"
+    "res/*.h"
     
     # ImGuiFileDialog
     "lib/ImGuiFileDialog/ImGuiFileDialog/*.cpp"
 )
 
 add_executable(j3dmaterializer ${J3DMATERIALIZER_SRC})
-target_include_directories(j3dultra PUBLIC include include/util lib/glfw/include lib/ImGuiFileDialog/ImGuiFileDialog/)
+target_include_directories(j3dultra PUBLIC include res include/util lib/glfw/include lib/ImGuiFileDialog/ImGuiFileDialog/)
 target_link_libraries(j3dmaterializer PUBLIC j3dultra imgui glfw)
