@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UCamera.hpp"
+#include "USettings.hpp"
 
 #include <vector>
 #include <filesystem>
@@ -9,10 +10,12 @@
 class UMaterializerUIPanel;
 class UMaterialLayer;
 class UMaterializerIOManager;
+class UGrid;
 
 namespace bStream { class CStream; }
 class J3DModelData;
 class J3DMaterial;
+struct J3DTexture;
 class J3DModelInstance;
 
 class UMaterializerContext {
@@ -20,6 +23,8 @@ class UMaterializerContext {
 	std::shared_ptr<J3DModelInstance> mInstance;
 
 	std::vector<std::shared_ptr<J3DMaterial>> mMaterials;
+	std::vector<std::shared_ptr<J3DTexture>> mTextures;
+
 	std::vector<std::shared_ptr<UMaterialLayer>> mLayers;
 
 	uint32_t mCurrentMaterialIndex = 0;
@@ -40,6 +45,9 @@ class UMaterializerContext {
 	bool bIsSaveDialogOpen { false };
 
 	std::shared_ptr<UMaterializerIOManager> mIOManager;
+	std::shared_ptr<UGrid> mGrid;
+
+	std::shared_ptr<USettings> mSettings;
 
 	void SetUpDocking();
 
@@ -50,6 +58,7 @@ class UMaterializerContext {
 	void RenderTexGenList();
 	void RenderTexMatrixList();
 	void RenderColorChannelList();
+	void RenderTextureList();
 	void RenderMainWindow(float deltaTime);
 	void RenderPanels(float deltaTime);
 	void RenderMenuBar();
@@ -63,9 +72,11 @@ class UMaterializerContext {
 	void SaveModel(std::filesystem::path filePath);
 
 public:
-	UMaterializerContext() {}
+	UMaterializerContext();
 	~UMaterializerContext() {}
 
 	bool Update(float deltaTime);
 	void Render(float deltaTime);
+
+	void OnFileDropped(std::string path);
 };
